@@ -1,6 +1,6 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import type { Request } from 'express';
-import type { JwtValidatedUser } from '../strategies/jwt.strategy/jwt.strategy';
+import type { JwtValidatedUser } from '../../auth/strategies/jwt.strategy/jwt.strategy';
 
 type RequestWithJwtUser = Request & { user: JwtValidatedUser };
 

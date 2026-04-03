@@ -5,6 +5,7 @@ import { PrismaModule } from 'src/prisma/prisma.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy/jwt.strategy';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
   controllers: [AuthController],
@@ -16,6 +17,7 @@ import { JwtStrategy } from './strategies/jwt.strategy/jwt.strategy';
       signOptions: { expiresIn: '15m' },
     }),
     PrismaModule,
+    UsersModule,
   ],
 })
 export class AuthModule {}

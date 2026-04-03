@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
-import { ROLES_KEY } from 'src/auth/decorators/roles.decorator';
+import { ROLES_KEY } from 'src/common/decorators/roles.decorator';
 import type { JwtValidatedUser } from 'src/auth/strategies/jwt.strategy/jwt.strategy';
 
 @Injectable()
