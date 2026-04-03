@@ -9,17 +9,19 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
 import type { JwtAccessPayload } from './strategies/jwt.strategy/jwt.strategy';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
+    private usersService: UsersService,
   ) {}
 
   async signup(signupDto: SignupDto) {
     const { email, password } = signupDto;
-    const user = await this.prisma.user.findUnique({ where: { email } });
+    const user = await this.usersService.findByEmail(email);
 
     if (user) {
       throw new BadRequestException('Email already in use');
@@ -27,12 +29,7 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = await this.prisma.user.create({
-      data: {
-        email: email,
-        password: hashedPassword,
-      },
-    });
+    const newUser = await this.usersService.create(email, hashedPassword);
 
     return {
       id: newUser.id,
@@ -42,7 +39,7 @@ export class AuthService {
 
   async login(loginDto: LoginDto) {
     const { email, password } = loginDto;
-    const user = await this.prisma.user.findUnique({ where: { email } });
+    const user = await this.usersService.findByEmail(email);
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');

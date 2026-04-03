@@ -10,4 +10,10 @@ export class UsersService {
       where: { email },
     });
   }
+
+  async create(email: string, password: string) {
+    return this.prisma.user.create({
+      data: { email, password },
+    });
+  }
 }

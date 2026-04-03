@@ -6,6 +6,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './common/guards/jwt-auth/jwt-auth.guard';
 import { UsersModule } from './users/users.module';
+import { SessionsModule } from './sessions/sessions.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { UsersModule } from './users/users.module';
       envFilePath: '.env', // Default is .env at root, but you can specify paths
     }),
     UsersModule,
+    SessionsModule,
   ],
   controllers: [AppController],
   providers: [
