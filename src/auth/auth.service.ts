@@ -10,13 +10,14 @@ import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
 import type { JwtAccessPayload } from './strategies/jwt.strategy/jwt.strategy';
 import { UsersService } from 'src/users/users.service';
+import { SessionsService } from 'src/sessions/sessions.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private prisma: PrismaService,
     private jwt: JwtService,
     private usersService: UsersService,
+    private sessionsService: SessionsService,
   ) {}
 
   async signup(signupDto: SignupDto) {
@@ -51,21 +52,13 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const session = await this.prisma.session.create({
-      data: {
-        userId: user.id,
-        hashedRefreshToken: null,
-      },
-    });
+    const session = await this.sessionsService.create(user.id);
 
     const payload = { sub: user.id, email: user.email, sid: session.id };
 
     const { accessToken, refreshToken } = await this.signTokens(payload);
 
-    await this.prisma.session.update({
-      where: { id: session.id },
-      data: { hashedRefreshToken: await bcrypt.hash(refreshToken, 10) },
-    });
+    await this.sessionsService.updateRefreshToken(session.id, refreshToken);
 
     return {
       accessToken,
@@ -82,7 +75,7 @@ export class AuthService {
   }
 
   async logout(sessionId: string) {
-    await this.prisma.session.delete({ where: { id: sessionId } });
+    await this.sessionsService.delete(sessionId);
     return { message: 'Logged out successfully' };
   }
 
@@ -92,35 +85,30 @@ export class AuthService {
     if (payload.sid !== sessionId) {
       throw new UnauthorizedException('Invalid refresh token');
     }
-    const session = await this.prisma.session.findUnique({
-      where: { id: sessionId },
-      include: { user: { select: { email: true } } },
-    });
-    if (!session) {
+    const session = await this.sessionsService.findById(sessionId);
+    if (!session || !session.hashedRefreshToken) {
       throw new UnauthorizedException('Session expired');
     }
     const { hashedRefreshToken } = session;
-    if (hashedRefreshToken === null) {
-      throw new UnauthorizedException('Invalid refresh token');
-    }
     const isRefreshTokenValid = await bcrypt.compare(
       incomingRefreshToken,
       hashedRefreshToken,
     );
     if (!isRefreshTokenValid) {
-      await this.prisma.session.deleteMany({ where: { userId: payload.sub } });
-      throw new UnauthorizedException('Invalid refresh token');
+      await this.sessionsService.deleteAllByUserId(payload.sub);
+      throw new UnauthorizedException('Invalid session');
+    }
+    const user = await this.usersService.findById(session.userId);
+    if (!user) {
+      throw new UnauthorizedException('Invalid session');
     }
     const newPayload = {
       sub: session.userId,
-      email: session.user.email,
+      email: user.email,
       sid: session.id,
     };
     const { accessToken, refreshToken } = await this.signTokens(newPayload);
-    await this.prisma.session.update({
-      where: { id: sessionId },
-      data: { hashedRefreshToken: await bcrypt.hash(refreshToken, 10) },
-    });
+    await this.sessionsService.updateRefreshToken(sessionId, refreshToken);
     return { accessToken, refreshToken };
   }
 }
