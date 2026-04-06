@@ -1,5 +1,7 @@
 ## Learned User Preferences
 
+- User consistently prefers fixes to include verification steps and a concise explanation of the root cause.
+
 ## Learned Workspace Facts
 
 - Prisma 7 in this project: instantiate `PrismaClient` with a PostgreSQL driver adapter (e.g. `PrismaPg` with `connectionString` from config/env); do not pass `datasourceUrl` into the `PrismaClient` constructor.
